@@ -56,10 +56,10 @@ class CharacterPanel:
         self.btn_plus_rect = pygame.Rect(0, 0, 30, 30)
         
         self.tokens = []
-        self.reset()
+        self._add_token()
 
     def reset(self):
-        """Reinicia la ventana a solo 1 jugador y restablece su estado a la barra"""
+        """Reinicia la ventana a 1 jugador predeterminado en la barra"""
         self.tokens.clear()
         self._add_token()
 
@@ -70,15 +70,14 @@ class CharacterPanel:
             color = self.colors[idx % len(self.colors)]
             token = CharacterToken(0, 0, 18, color, label)
             self.tokens.append(token)
-            self.reposition_tokens(force_all=True)
+            self.reposition_tokens()  # <- Corrección: Ya no fuerza a los demás a devolverse
 
     def _remove_token(self):
         if len(self.tokens) > 1:
             self.tokens.pop()
-            self.reposition_tokens(force_all=True)
+            self.reposition_tokens()  # <- Corrección: Ya no fuerza a los demás a devolverse
 
     def reposition_tokens(self, force_all=False):
-        """Reorganiza en la ventana las fichas. Si force_all es True, regresa todas a la barra."""
         start_y = self.rect.y + 60
         spacing = 45
         for i, token in enumerate(self.tokens):
