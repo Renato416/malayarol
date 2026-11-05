@@ -33,7 +33,7 @@ def main():
     
     # Panel de personajes
     char_panel_width = 110
-    char_panel = CharacterPanel(0, 40, char_panel_width, height - 80, font)
+    char_panel = CharacterPanel(0, 40, char_panel_width, font)
 
     def get_panel_rect():
         current_panel_width = screen.get_width() // 4
@@ -138,7 +138,7 @@ def main():
             scenario_rect.center = (center_x, center_y)
             
             # Alinear la ventana de personajes con la altura real del escenario
-            char_panel.update_position(char_x, scenario_rect.y, scenario_rect.height)
+            char_panel.update_position(char_x, scenario_rect.y)
             
             # Dibujar el escenario y su marco
             current_scenario.draw(screen, scenario_rect)

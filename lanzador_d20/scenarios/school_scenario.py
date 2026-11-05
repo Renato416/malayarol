@@ -1,31 +1,39 @@
+import os
 import pygame
 from ui.button import Button
 
 class SchoolScenario:
-    def __init__(self):
+    def __init__(self, image_filename="61816.png"):
         self.font = pygame.font.SysFont(None, 24)
         
+        # Obtener la ruta absoluta del directorio raíz del proyecto
+        base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+        image_path = os.path.join(base_dir, image_filename)
+        
+        if not os.path.exists(image_path):
+            # Probar si está en la misma carpeta del script
+            image_path = image_filename
+
         try:
-            raw_img = pygame.image.load("61816.png").convert_alpha()
-            clean_img = self._remove_black_background(raw_img)
-            self.image = self._crop_to_content(clean_img)
-        except FileNotFoundError:
+            raw_img = pygame.image.load(image_path).convert_alpha()
+            self.image = self._crop_to_content(raw_img)
+        except Exception as e:
+            print(f"[ERROR] No se pudo cargar la imagen: {image_path} | Info: {e}")
             self.image = pygame.Surface((800, 1000), pygame.SRCALPHA)
-            self.image.fill((0, 0, 0, 0))
-            
+            self.image.fill((255, 255, 255, 180)) # Fondo visible provisional si falla
+
         self.invisible_button_rect = None
 
-        # Posiciones relativas (rel_x, rel_y) con los reajustes aplicados
         self.room_data = [
-            {"id": "01", "rel_x": 0.75, "rel_y": 0.88},  # Más a la derecha y más abajo
-            {"id": "02", "rel_x": 0.43, "rel_y": 0.88},  # Más abajo
+            {"id": "01", "rel_x": 0.75, "rel_y": 0.88},
+            {"id": "02", "rel_x": 0.43, "rel_y": 0.88},
             {"id": "03", "rel_x": 0.78, "rel_y": 0.67},
-            {"id": "04", "rel_x": 0.54, "rel_y": 0.35},  # Más arriba
-            {"id": "05", "rel_x": 0.76, "rel_y": 0.14},  # Más a la derecha
-            {"id": "06", "rel_x": 0.13, "rel_y": 0.28},  # Más a la izquierda
-            {"id": "07", "rel_x": 0.77, "rel_y": 0.35},  # Más arriba
-            {"id": "08", "rel_x": 0.44, "rel_y": 0.10},  # Más a la izquierda
-            {"id": "09", "rel_x": 0.14, "rel_y": 0.45},  # Más a la izquierda
+            {"id": "04", "rel_x": 0.54, "rel_y": 0.35},
+            {"id": "05", "rel_x": 0.76, "rel_y": 0.14},
+            {"id": "06", "rel_x": 0.13, "rel_y": 0.28},
+            {"id": "07", "rel_x": 0.77, "rel_y": 0.35},
+            {"id": "08", "rel_x": 0.44, "rel_y": 0.10},
+            {"id": "09", "rel_x": 0.14, "rel_y": 0.45},
         ]
         
         self.room_buttons = []
@@ -36,16 +44,13 @@ class SchoolScenario:
             btn.text_color = (0, 0, 0)
             self.room_buttons.append({"btn": btn, "rel_x": r["rel_x"], "rel_y": r["rel_y"]})
 
-    def _remove_black_background(self, surface):
-        surf = surface.copy()
-        surf.set_colorkey((0, 0, 0))
-        return surf
-
     def _crop_to_content(self, surface):
         bounding_box = surface.get_bounding_rect()
-        cropped_surf = pygame.Surface((bounding_box.width, bounding_box.height), pygame.SRCALPHA)
-        cropped_surf.blit(surface, (0, 0), bounding_box)
-        return cropped_surf
+        if bounding_box.width > 0 and bounding_box.height > 0:
+            cropped_surf = pygame.Surface((bounding_box.width, bounding_box.height), pygame.SRCALPHA)
+            cropped_surf.blit(surface, (0, 0), bounding_box)
+            return cropped_surf
+        return surface
 
     def get_scaled_size(self, max_width, max_height):
         img_w, img_h = self.image.get_size()

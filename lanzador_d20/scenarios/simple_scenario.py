@@ -1,15 +1,22 @@
+import os
 import pygame
 
 class SimpleScenario:
-    def __init__(self, image_path="bosque.png"):
-        self.image_path = image_path
+    def __init__(self, image_filename="bosque.png"):
+        base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+        image_path = os.path.join(base_dir, image_filename)
+
+        if not os.path.exists(image_path):
+            image_path = image_filename
+
         try:
-            self.image = pygame.image.load(self.image_path).convert_alpha()
-        except FileNotFoundError:
+            self.image = pygame.image.load(image_path).convert_alpha()
+        except Exception as e:
+            print(f"[ERROR] No se pudo cargar la imagen: {image_path} | Info: {e}")
             self.image = pygame.Surface((800, 600), pygame.SRCALPHA)
             self.image.fill((220, 220, 220))
             font = pygame.font.SysFont(None, 30)
-            txt = font.render(f"Coloca la imagen: {self.image_path}", True, (50, 50, 50))
+            txt = font.render(f"Coloca la imagen en la raíz: {image_filename}", True, (50, 50, 50))
             self.image.blit(txt, (40, 40))
 
         self.invisible_button_rect = None
