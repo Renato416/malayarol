@@ -30,14 +30,18 @@ def main():
     nav_width = 80 
     
     # =========================================================
-    # 3. CARGA DE ESCENARIOS (MAPAS)
+    # 3. CARGA DE ESCENARIOS Y BOTONES (MAPAS Y DADOS)
     # =========================================================
     scenarios = [SchoolScenario(), SimpleScenario("bosque.png")]
     current_scenario_idx = 0
     
-    # Botones en la barra izquierda para cambiar mapa
-    btn_sc1 = Button(10, 20, 60, 40, "E1", font)
-    btn_sc2 = Button(10, 75, 60, 40, "E2", font)
+    # Botones en la barra izquierda para cambiar mapa (con imágenes)
+    btn_sc1 = Button(10, 20, 60, 60, "E1", font, image_path="es_escuela.png")
+    btn_sc2 = Button(10, 90, 60, 60, "E2", font, image_path="es_bosque.png")
+
+    # Botones superiores en el panel derecho (Dados sin fondo)
+    btn_d20 = Button(0, 20, 70, 70, "D20", font, image_path="dadod20.png", draw_background=False)
+    btn_d6 = Button(0, 20, 70, 70, "D6", font, image_path="dadod6.png", draw_background=False)
     
     # Panel de personajes (Barra de Jugadores)
     char_panel_width = 110
@@ -73,11 +77,17 @@ def main():
     while running:
         dt = clock.tick(60) / 1000.0
 
-        # Actualizar área del panel derecho y botones dinámicos
+        # Actualizar área del panel derecho y posiciones dinámicas de botones
         panel_rect = get_panel_rect()
         btn_toggle_rect.x = panel_rect.x - 30
-        btn_d20_rect = pygame.Rect(panel_rect.x + 20, 20, 60, 60) if panel_open else pygame.Rect(-100, -100, 0, 0)
-        btn_d6_rect = pygame.Rect(panel_rect.x + 90, 20, 60, 60) if panel_open else pygame.Rect(-100, -100, 0, 0)
+        
+        if panel_open:
+            btn_d20.rect.x = panel_rect.x + 20
+            btn_d6.rect.x = panel_rect.x + 100
+        else:
+            # Esconderlos fuera de pantalla si el panel está cerrado
+            btn_d20.rect.x = -100
+            btn_d6.rect.x = -100
 
         current_scenario = scenarios[current_scenario_idx]
 
@@ -111,18 +121,22 @@ def main():
                         handled = True
                         break
                     
-            # Eventos de botones generales (abrir panel, generar dados)
+                # Eventos de botones de dados usando la clase Button
+                if not handled:
+                    if btn_d20.handle_event(event):
+                        add_window(D20)
+                        handled = True
+                    elif btn_d6.handle_event(event):
+                        add_window(D6)
+                        handled = True
+                    
+            # Eventos de botones generales (abrir panel, etc.)
             if not handled and event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 if getattr(current_scenario, 'invisible_button_rect', None) and current_scenario.invisible_button_rect.collidepoint(event.pos):
                     print("¡Clic en las escaleras!")
                     
                 if btn_toggle_rect.collidepoint(event.pos):
                     panel_open = not panel_open
-                elif panel_open:
-                    if btn_d20_rect.collidepoint(event.pos):
-                        add_window(D20)
-                    elif btn_d6_rect.collidepoint(event.pos):
-                        add_window(D6)
 
         # ---------------------------------------------------------
         # 5B. ACTUALIZACIÓN LÓGICA (ANIMACIONES Y POSICIONES)
@@ -187,13 +201,9 @@ def main():
         if panel_open:
             pygame.draw.line(screen, (255, 255, 255), (panel_rect.x, 0), (panel_rect.x, screen.get_height()), 2)
             
-            pygame.draw.rect(screen, (255, 255, 255), btn_d20_rect, width=2, border_radius=5)
-            text_d20 = font.render("D20", True, (255, 255, 255))
-            screen.blit(text_d20, (btn_d20_rect.centerx - text_d20.get_width()//2, btn_d20_rect.centery - text_d20.get_height()//2))
-
-            pygame.draw.rect(screen, (255, 255, 255), btn_d6_rect, width=2, border_radius=5)
-            text_d6 = font.render("D6", True, (255, 255, 255))
-            screen.blit(text_d6, (btn_d6_rect.centerx - text_d6.get_width()//2, btn_d6_rect.centery - text_d6.get_height()//2))
+            # Dibujar los botones usando su propio método draw (que procesa la imagen y la transparencia)
+            btn_d20.draw(screen)
+            btn_d6.draw(screen)
 
             for w in windows:
                 w.draw(screen)
