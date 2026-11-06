@@ -1,7 +1,8 @@
 import pygame
+import os
 
 class CharacterToken:
-    def __init__(self, x, y, radius, color, label="P1"):
+    def __init__(self, x, y, radius, color, label="P1", image_path=None):
         self.x = x
         self.y = y
         self.radius = radius
@@ -11,12 +12,33 @@ class CharacterToken:
         self.drag_offset_x = 0
         self.drag_offset_y = 0
         self.has_been_moved = False
+        
+        self.image = None
+        # Intentar cargar la imagen si se proporciona una ruta
+        if image_path and os.path.exists(image_path):
+            try:
+                # Cargar imagen y convertir formato
+                raw_img = pygame.image.load(image_path).convert()
+                # Como son JPG con fondo negro, hacemos el negro transparente
+                raw_img.set_colorkey((0, 0, 0))
+                # Escalar la imagen al tamaño exacto del token (diámetro = radio * 2)
+                self.image = pygame.transform.smoothscale(raw_img, (radius * 2, radius * 2))
+            except Exception as e:
+                print(f"[ERROR] No se pudo cargar el token {image_path}: {e}")
 
     def draw(self, surface, font):
-        pygame.draw.circle(surface, self.color, (int(self.x), int(self.y)), self.radius)
-        pygame.draw.circle(surface, (255, 255, 255), (int(self.x), int(self.y)), self.radius, 2)
-        txt = font.render(self.label, True, (255, 255, 255))
-        surface.blit(txt, txt.get_rect(center=(int(self.x), int(self.y))))
+        if self.image:
+            # Dibujar la imagen centrada
+            img_rect = self.image.get_rect(center=(int(self.x), int(self.y)))
+            surface.blit(self.image, img_rect)
+            # Dibujar el borde circular blanco encima para que se vea pulido
+            pygame.draw.circle(surface, (255, 255, 255), (int(self.x), int(self.y)), self.radius, 2)
+        else:
+            # Dibujo por defecto (Círculo de color + Texto) si no hay imagen
+            pygame.draw.circle(surface, self.color, (int(self.x), int(self.y)), self.radius)
+            pygame.draw.circle(surface, (255, 255, 255), (int(self.x), int(self.y)), self.radius, 2)
+            txt = font.render(self.label, True, (255, 255, 255))
+            surface.blit(txt, txt.get_rect(center=(int(self.x), int(self.y))))
 
     def handle_event(self, event):
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
@@ -44,12 +66,21 @@ class CharacterPanel:
         self.font = font
         
         self.colors = [
-            (220, 50, 50),   # P1: Rojo
-            (50, 180, 50),   # P2: Verde
-            (50, 100, 220),  # P3: Azul
-            (230, 160, 30),  # P4: Naranja
-            (160, 50, 200),  # P5: Púrpura
-            (40, 180, 180)   # P6: Cian
+            (220, 50, 50),   # P1
+            (50, 180, 50),   # P2
+            (50, 100, 220),  # P3
+            (230, 160, 30),  # P4
+            (160, 50, 200),  # P5
+            (40, 180, 180)   # P6
+        ]
+        
+        # Nombres de las imágenes para los primeros 5 tokens
+        self.image_names = [
+            "bomba.png",
+            "espada.png",
+            "azul.png",
+            "martillo.png",
+            "villano.png"
         ]
         
         self.btn_minus_rect = pygame.Rect(0, 0, 30, 30)
@@ -68,14 +99,26 @@ class CharacterPanel:
             idx = len(self.tokens)
             label = f"P{idx + 1}"
             color = self.colors[idx % len(self.colors)]
-            token = CharacterToken(0, 0, 18, color, label)
+            
+            # Buscar la ruta de la imagen si corresponde a los primeros 5
+            image_path = None
+            if idx < len(self.image_names):
+                base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+                target_path = os.path.join(base_dir, self.image_names[idx])
+                if not os.path.exists(target_path):
+                    target_path = self.image_names[idx] # Intento local si falla el base_dir
+                
+                if os.path.exists(target_path):
+                    image_path = target_path
+
+            token = CharacterToken(0, 0, 18, color, label, image_path)
             self.tokens.append(token)
-            self.reposition_tokens()  # <- Corrección: Ya no fuerza a los demás a devolverse
+            self.reposition_tokens()
 
     def _remove_token(self):
         if len(self.tokens) > 1:
             self.tokens.pop()
-            self.reposition_tokens()  # <- Corrección: Ya no fuerza a los demás a devolverse
+            self.reposition_tokens()
 
     def reposition_tokens(self, force_all=False):
         start_y = self.rect.y + 60
